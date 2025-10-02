@@ -4,7 +4,7 @@ clear;
 close all;
 clc;
 
-ecg_data = load('ecg_hfn.dat');
+ecg_data = load('ecg_lfn.dat');
 ecg = ecg_data(:, 1);
 
 fs_ecg = 1000;
@@ -18,7 +18,7 @@ qrs_template = ecg(template_start_index:template_end_index);
 
 figure;
 plot(qrs_template);
-title('您選取的 QRS 樣板波形');
+title('QRS 樣板波形');
 xlabel('取樣點 (Samples)');
 ylabel('Amplitude');
 
@@ -27,7 +27,7 @@ ylabel('Amplitude');
 correlation_output = correlation_output / max(correlation_output);
 
 % --- 可調整參數 ---
-detection_threshold = 0.8; % 您可以根據需要調整此閾值
+detection_threshold = 0.6; % 您可以根據需要調整此閾值
 min_beat_distance = 0.5 * fs_ecg;
 % -------------------------
 
@@ -53,7 +53,7 @@ hold off;
 locs_corrected = locs - (length(ecg) - 1);
 
 % 手動微調標記點位置
-manual_shift = -45;  
+manual_shift = -80;  
 locs_corrected = locs_corrected - manual_shift;
 
 %% 4. 計算 R-R 間期與 BPM

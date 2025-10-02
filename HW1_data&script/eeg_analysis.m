@@ -5,10 +5,6 @@ o1 = load('eeg1-o1.dat');
 o2 = load('eeg1-o2.dat');
 fs_eeg = 100; % 取樣率 100 Hz 
 
-% ECG data (fs = 1000 Hz)
-ecg = load('ecg_hfn.dat');
-fs_ecg = 1000; % 取樣率 1000 Hz
-
 % --- Task 1.1: Autocorrelation of f3 and o1 ---
 % 定義時間與索引
 time_start_acf = 4.2;
