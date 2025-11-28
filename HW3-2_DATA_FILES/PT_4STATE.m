@@ -1,7 +1,6 @@
 % =========================================================================
-% 生醫訊號處理 HW3 - Problem 2: 睡眠 ECG 分析 (v4 - 完整修正版)
+% 生醫訊號處理 HW3 - Problem 2: 睡眠 ECG 分析 (v4 - 增加積分圖)
 % =========================================================================
-
 %% 1. 初始化與定義參數
 clear;          
 close all;      
@@ -57,6 +56,7 @@ elseif size(ecg_original, 1) > 1 && size(ecg_original, 2) > 1
 end
 
 fprintf('成功載入原始訊號，長度為: %d 點。\n', length(ecg_original));
+
 if length(ecg_original) < fs_original * 10
     error('載入的訊號長度過短 (%d 點)，請檢查 .mat 檔案內容。', length(ecg_original));
 end
@@ -71,7 +71,6 @@ t = (0:length(ecg_resampled)-1) / fs;
 % =========================================================================
 % 步驟 3: Pan-Tompkins 演算法 (fs=200Hz)
 % =========================================================================
-
 % 步驟 3.1: 帶通濾波
 nyquist_freq = fs / 2;
 Wn = passband_freq / nyquist_freq; 
@@ -100,12 +99,10 @@ fprintf('步驟 4: 移動積分完成。\n');
 % =========================================================================
 % 步驟 4: 閾值偵測與參數計算
 % =========================================================================
-
 % --- 閾值策略：使用百分位數 (Percentile) ---
-% 這種方法對抗長訊號中的異常雜訊峰值更為穩健
 simple_threshold = prctile(ecg_integrated, 80); % 使用第 80 百分位數作為閾值
-min_peak_distance_samples = round(min_peak_distance_sec * fs);
 
+min_peak_distance_samples = round(min_peak_distance_sec * fs);
 [pks, locs, w, p] = findpeaks(ecg_integrated, ...
     'MinPeakHeight', simple_threshold, ...
     'MinPeakDistance', min_peak_distance_samples);
@@ -117,18 +114,15 @@ total_delay = round(delay_deriv + delay_integ); % 15
 locs_corrected = locs - total_delay; 
 
 % --- 過濾無效索引 ---
-% 確保校正後的位置仍然在訊號範圍內
 valid_indices_mask = (locs_corrected > 1) & (locs_corrected <= length(ecg_resampled));
 locs_corrected = locs_corrected(valid_indices_mask);
-w = w(valid_indices_mask); % <-- 這裡才是 valid_indices_mask 該用的地方
-
+w = w(valid_indices_mask); 
 fprintf('QRS 峰值偵測完成，共找到 %d 個心跳 (已應用 %d 點延遲校正)。\n', length(locs_corrected), total_delay);
 
 %% 5. 計算平均心率與 QRS 寬度
 rr_intervals_sec = diff(locs_corrected) / fs; 
 bpm = 60 ./ rr_intervals_sec;
 avg_bpm = mean(bpm);
-
 avg_qrs_width_samples = mean(w);
 avg_qrs_width_ms = (avg_qrs_width_samples / fs) * 1000;
 
@@ -140,6 +134,20 @@ fprintf('平均 QRS 寬度 (Averaged QRS Width): %.1f ms\n', avg_qrs_width_ms);
 % =========================================================================
 % 步驟 6: 視覺化最終驗證
 % =========================================================================
+
+% --- !!! 新增的積分圖 (用於偵錯) !!! ---
+figure; 
+plot(t, ecg_integrated, 'c'); 
+hold on;
+yline(simple_threshold, 'r--', 'LineWidth', 2, 'DisplayName', '偵測閾值 (80%)');
+title('步驟 4: 移動窗口積分後 (用於閾值調整)');
+xlabel('時間 (seconds)');
+ylabel('Amplitude');
+grid on;
+axis tight;
+legend;
+% --- !!! 偵錯圖結束 !!! ---
+
 
 figure;
 plot(t, ecg_resampled, 'b', 'DisplayName', '降採樣後 ECG 訊號 (200Hz)');
